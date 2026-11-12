@@ -1,23 +1,34 @@
 package tw.edu.pu.csim.S1141258.canvas
 
-import android.R
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.tooling.preview.Preview
+import kotlinx.coroutines.delay
 import tw.edu.pu.csim.S1141258.canvas.ui.theme.CanvasTheme
 
 class MainActivity : ComponentActivity() {
@@ -25,12 +36,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            CanvasTheme {
+            CanvasTheme() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    TestCanvas(
+                    CanvasScreen(
                         modifier = Modifier.padding(innerPadding)
                     )
-
                 }
             }
         }
@@ -38,26 +48,90 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TestCanvas(modifier: Modifier = Modifier) {
-    Canvas(
-        modifier = modifier.fillMaxSize()
-    ) {
-        //繪製洋紅色的圓, 半徑 100, 圓心 (100,100)
-        drawCircle(
-            Color.Magenta,
-            100f,
-            Offset(100f, 100f)
-        )
+fun CanvasScreen(modifier: Modifier = Modifier) {
 
-        //繪製藍色空心矩形, 左上角 (300,200), 寬度與高度 200
-        drawRect(
-            Color.Blue,
-            Offset(300f, 200f),
-            Size(200f, 200f),
-            style = Stroke(width = 5f) // 使用 style 控制外框樣式
-        )
+    var CanvasWidth by remember { mutableStateOf(0f) }
+    var CanvasHeight by remember { mutableStateOf( 0f ) }
 
+    var minionsX by remember { mutableStateOf(0f) }
+    var minionsY by remember { mutableStateOf(0f) }
+
+    var gameOver by remember { mutableStateOf(false) }
+
+    // 載入圖片資源 (小小兵)
+    val minionsImage: ImageBitmap =
+        ImageBitmap.imageResource( R.drawable.minions)
+
+    LaunchedEffect(gameOver) {
+        while (!gameOver) {
+            delay(100L) // 0.1 秒
+            minionsX += 5
+            minionsY += 10
+
+            // 判斷是否超出邊界（可加入圖片寬高 offset 讓它完全消失後才重置）
+            if (minionsX > CanvasWidth || minionsY >CanvasHeight) {
+                minionsX = 0f
+                minionsY = 0f
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ){
+        Canvas(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            //繪製洋紅色的圓, 半徑 100, 圓心 (100,100)
+            drawCircle(
+                Color.Magenta,
+                100f,
+                Offset(300f, 800f)
+            )
+
+            //繪製藍色空心矩形, 左上角 (300,200), 寬度與高度 200
+            drawRect(
+                Color.Blue,
+                Offset(300f, 200f),
+                Size(200f, 200f),
+                style = Stroke(width = 10f) // 使用 style 控制外框樣式
+            )
+
+            CanvasWidth = size.width
+            CanvasHeight = size.height
+
+            drawLine(
+                Color.Red,
+                Offset(200f, 800f),
+                Offset(size.width, size.height),
+                strokeWidth = 10f
+            )
+
+
+            // 將畫布起點移至置中位置後畫圖
+            translate(minionsX,minionsY) {
+                drawImage(minionsImage)
+            }
+
+
+
+        }
+
+
+        Column {
+            Text("畫布寬度 $CanvasWidth, 長度 $CanvasHeight")
+
+            Button (
+                onClick = { gameOver = !gameOver}
+            )
+            {
+                if (gameOver){ Text("繼續遊戲") }
+                else { Text ("停止遊戲") }
+            }
+        }
 
     }
+
+
 }
 
